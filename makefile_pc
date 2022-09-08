@@ -1,0 +1,12 @@
+FC=gfortran
+FFLAG1=-L/usr/lib/x86_64-linux-gnu/ -I/usr/include -lfftw3_threads -lfftw3 -lm -fopenmp -L${HOME}/json-fortran-8.3.0/lib -ljsonfortran -I${HOME}/json-fortran-8.3.0/lib -L${HOME}/libs/hdf5-1.12.0/lib/ -lhdf5_fortran -I${HOME}/libs/hdf5-1.12.0/include/
+FFLAG2=-O3 -march=native
+SRC=fft.f03 grid.f03 init.f03 rhs.f03 time.f03 gp_eqm.f03
+OBJ=${SRC:.f03=.o}
+
+%.o: %.f03
+	$(FC) $(FFLAG1) -c $<
+eqm: $(OBJ)
+	$(FC) $(OBJ) $(FFLAG2) $(FFLAG1) -o $@
+clean:
+	rm -r ./*.o ./*.mod
