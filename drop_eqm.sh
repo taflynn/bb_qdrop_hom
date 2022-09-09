@@ -14,8 +14,8 @@ export OMP_NUM_THREADS=$ompthreads
 # working directory setup
 mkdir /nobackup/b6019832/$1
 cp config.json /nobackup/b6019832/$1
-cp ./gp_lck /nobackup/b6019832/$1
+cp ./eqm /nobackup/b6019832/$1
 mv ./slurm-${SLURM_JOB_ID}.out /nobackup/b6019832/$1
 cd /nobackup/b6019832/$1
 
-./gp_eqm
+./eqm
