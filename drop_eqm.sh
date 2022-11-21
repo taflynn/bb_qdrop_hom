@@ -19,4 +19,4 @@ cp ./gp_eqm /nobackup/b6019832/$1
 mv ./slurm-${SLURM_JOB_ID}.out /nobackup/b6019832/$1
 cd /nobackup/b6019832/$1
 
-./gp_eqm
+./eqm
