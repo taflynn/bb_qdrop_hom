@@ -52,6 +52,18 @@ module init
           end do
         end do
       end do
+    elseif (init_type == 3) then
+      write(*,*) "initial input to imaginary time: Super-Gaussian + const."
+      do k = 1, Nz
+        do j = 1, Ny
+          do i = 1, Nx
+            init_wav(i,j,k) = exp(-(x(i)**2.0/(2.0*gauss_sig**2.0) &
+                                  + y(j)**2.0/(2.0*gauss_sig**2.0) &
+                                  + z(k)**2.0/(2.0*gauss_sig**2.0))**3.0)**0.5 &
+                              + 0.001
+          end do
+        end do
+      end do
     end if
 
   end function init_wav
