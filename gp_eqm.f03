@@ -25,6 +25,10 @@ program gp_lck
   double precision :: N1, N2
   double precision :: alpha, beta, eta
 
+  integer :: pot_type1=1, pot_type2=2
+  double precision :: omgx1, omgy1, omgz1
+  double precision :: omgx2, omgy2, omgz2
+
   integer :: im_real
   double complex :: dt
   double precision :: mu1, mu2
@@ -33,10 +37,14 @@ program gp_lck
   double precision, allocatable :: kx(:), ky(:), kz(:)
 
   complex(C_DOUBLE_COMPLEX), allocatable :: dk2(:,:,:)
+  
+  double precision, allocatable :: V1(:, :, :), V2(:, :, :)
 
   ! json-fortran parameters
   type(json_file) :: json
+  type(json_core) ::jCore
   logical :: is_found
+  type(json_value), pointer :: parent_ptr, child_ptr, c_child_ptr
 
   ! HDF5 parameters
   integer :: error
@@ -53,36 +61,101 @@ program gp_lck
   call json%load(filename='config.json') 
 
   call json%print()
-  ! reading in the input data
-  ! read in grid size
-  call json%get("Nx", Nx, is_found)
-  call json%get("Ny", Ny, is_found)
-  call json%get("Nz", Nz, is_found)
-  ! read in grid spacing
-  call json%get("dx", dx, is_found)
-  call json%get("dy", dy, is_found)
-  call json%get("dz", dz, is_found)
-  ! read in time step size
-  call json%get("im_dt_coef", im_dt_coef, is_found)
-  call json%get("re_dt_coef", re_dt_coef, is_found)
-  ! read in time step numbers
-  call json%get("im_t_steps", im_t_steps, is_found)
-  call json%get("re_t_steps", re_t_steps, is_found)
-  ! read in time step saving numbers
-  call json%get("im_t_save", im_t_save, is_found)
-  call json%get("re_t_save", re_t_save, is_found)
-  ! read in initial wavefunction profile options
-  call json%get("init_type1", init_type1, is_found)
-  call json%get("init_type2", init_type2, is_found)
-  call json%get("gauss_sig1", gauss_sig1, is_found)
-  call json%get("gauss_sig2", gauss_sig2, is_found)
-  ! read in theoretical parameters (effective atom number here)
-  call json%get("N1", N1, is_found)
-  call json%get("N2", N2, is_found)
-  call json%get("alpha", alpha, is_found)
-  call json%get("beta", beta, is_found)
-  call json%get("eta", eta, is_found)
+
+  call json%get_core(jCore)
+  
+  ! Grid dimensions
+  call json%get('grid_size', parent_ptr, is_found)
+  call jCore%get_child(parent_ptr, 'Nx', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, Nx); end if
+
+  call jCore%get_child(parent_ptr, 'Ny', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, Ny); end if
+
+  call jCore%get_child(parent_ptr, 'Nz', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, Nz); end if
+  ! Grid spacing
+  call json%get('grid_space', parent_ptr, is_found)
+  call jCore%get_child(parent_ptr, 'dx', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, dx); end if
+
+  call jCore%get_child(parent_ptr, 'dy', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, dy); end if
+
+  call jCore%get_child(parent_ptr, 'dz', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, dz); end if
+
+  ! Time data
+  call json%get('time', parent_ptr, is_found)
+  call jCore%get_child(parent_ptr, 'im_dt_coef', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, im_dt_coef); end if
+
+  call jCore%get_child(parent_ptr, 're_dt_coef', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, re_dt_coef); end if
+
+  call jCore%get_child(parent_ptr, 'im_t_steps', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, im_t_steps); end if
+
+  call jCore%get_child(parent_ptr, 're_t_steps', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, re_t_steps); end if
+
+  call jCore%get_child(parent_ptr, 'im_t_save', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, im_t_save); end if
+
+  call jCore%get_child(parent_ptr, 're_t_save', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, re_t_save); end if
+
+  ! Initial wavefunction
+  call json%get('wav_init', parent_ptr, is_found)
+  call jCore%get_child(parent_ptr, 'init_type1', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, init_type1); end if
+
+  call jCore%get_child(parent_ptr, 'init_type2', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, init_type2); end if
+
+  call jCore%get_child(parent_ptr, 'gauss_sig1', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, gauss_sig1); end if
+
+  call jCore%get_child(parent_ptr, 'gauss_sig2', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, gauss_sig2); end if
+
+  ! Population numbers
+  call json%get('pop_nums', parent_ptr, is_found)
+  call jCore%get_child(parent_ptr, 'N1', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, N1); end if
+
+  call jCore%get_child(parent_ptr, 'N2', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, N2); end if
  
+  ! Parameters
+  call json%get('params', parent_ptr, is_found)
+  call jCore%get_child(parent_ptr, 'alpha', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, alpha); end if
+
+  call jCore%get_child(parent_ptr, 'beta', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, beta); end if
+
+  call jCore%get_child(parent_ptr, 'eta', child_ptr, is_found)
+  if (is_found) then; call jCore%get(child_ptr, eta); end if
+    ! Potentials
+  call json%get('potentials', parent_ptr, is_found)
+  call jCore%get_child(parent_ptr, 'pot1', child_ptr, is_found)
+  call jCore%get_child(child_ptr, 'omgx1', c_child_ptr, is_found)
+  if (is_found) then; call jCore%get(c_child_ptr, omgx1); end if
+  call jCore%get_child(child_ptr, 'omgy1', c_child_ptr, is_found)
+  if (is_found) then; call jCore%get(c_child_ptr, omgy1); end if
+  call jCore%get_child(child_ptr, 'omgz1', c_child_ptr, is_found)
+  if (is_found) then; call jCore%get(c_child_ptr, omgz1); end if
+
+  call jCore%get_child(parent_ptr, 'pot2', child_ptr, is_found)
+  call jCore%get_child(child_ptr, 'omgx2', c_child_ptr, is_found)
+  if (is_found) then; call jCore%get(c_child_ptr, omgx2); end if
+  call jCore%get_child(child_ptr, 'omgy2', c_child_ptr, is_found)
+  if (is_found) then; call jCore%get(c_child_ptr, omgy2); end if
+  call jCore%get_child(child_ptr, 'omgz2', c_child_ptr, is_found)
+  if (is_found) then; call jCore%get(c_child_ptr, omgz2); end if
+
+
   call json%destroy()
 
   ! set up 3D spatial grid
@@ -155,6 +228,9 @@ program gp_lck
     call renorm(psi2,dx,dy,dz,N2)
   end if
 
+  V1 = init_pot(x, y, z, omgx1, omgy1, omgz1, pot_type1)
+  V2 = init_pot(x, y, z, omgx2, omgy2, omgz2, pot_type2)
+
   ! begin time-stepping
   if (im_t_steps > 0) then
     write(*,*) "beginning imaginary time"
@@ -179,7 +255,7 @@ program gp_lck
     end if
 
     ! imaginary time function
-    call ssfm(psi1,psi2,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
+    call ssfm(psi1,psi2,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,V1,V2,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
   end if
   if (re_t_steps > 0) then
     write(*,*) "beginning real time"
@@ -200,7 +276,7 @@ program gp_lck
     end if
     
     ! real time function
-    call ssfm(psi1,psi2,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
+    call ssfm(psi1,psi2,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,V1,V2,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
   end if
   if (im_t_steps == 0 .and. re_t_steps == 0) then
     ! if there are no time-steps for imaginary and real time then stop program 

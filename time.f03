@@ -10,7 +10,7 @@ module time
   contains
 
   ! main ssfm time-stepping function
-  subroutine ssfm(psi1,psi2,dk2,t_steps,t_save,dt,dx,dy,dz,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
+  subroutine ssfm(psi1,psi2,dk2,t_steps,t_save,dt,dx,dy,dz,V1,V2,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
 
     integer, intent(in) :: t_steps, t_save, im_real
     double precision, intent(in) :: dx, dy, dz
@@ -18,6 +18,7 @@ module time
     double precision, intent(in) :: N1, N2
     double precision, intent(in) :: alpha, beta, eta
     complex(C_DOUBLE_COMPLEX), intent(in) :: dk2(:,:,:)
+    double precision, intent(in) :: V1(:,:,:), V2(:,:,:)
     
     complex(C_DOUBLE_COMPLEX), intent(inout) :: psi1(:,:,:), psi2(:,:,:)
     double precision, intent(inout) :: mu1, mu2
@@ -77,10 +78,10 @@ module time
       psi1_prev = psi1
 
       ! first component 1 half-step (non-linear terms)
-      call V_rhs1(psi1,psi2,mu1,alpha,beta,eta,dt,Nx,Ny,Nz)
+      call V_rhs1(psi1,psi2,mu1,V1,alpha,beta,eta,dt,Nx,Ny,Nz)
       
       ! first component 2 half-step (non-linear terms)
-      call V_rhs2(psi1_prev,psi2,mu2,alpha,beta,eta,dt,Nx,Ny,Nz)
+      call V_rhs2(psi1_prev,psi2,mu2,V2,alpha,beta,eta,dt,Nx,Ny,Nz)
 
       ! FFT wavefunction 1 to momentum space
       call fftw_execute_dft(plan_forw,psi1,psi1_k)
@@ -109,10 +110,10 @@ module time
       psi1_prev = psi1
 
       ! last component 1 half-step (non-linear terms)
-      call V_rhs1(psi1,psi2,mu1,alpha,beta,eta,dt,Nx,Ny,Nz)
+      call V_rhs1(psi1,psi2,mu1,V1,alpha,beta,eta,dt,Nx,Ny,Nz)
 
       ! last component 2 half-step (non-linear terms)
-      call V_rhs2(psi1_prev,psi2,mu2,alpha,beta,eta,dt,Nx,Ny,Nz)
+      call V_rhs2(psi1_prev,psi2,mu2,V2,alpha,beta,eta,dt,Nx,Ny,Nz)
 
       ! in imaginary time: renormalise and compute chemical potentials
       if (im_real == 0) then
@@ -125,9 +126,9 @@ module time
         ! FFT wavefunction 2 to real space
         call fftw_execute_dft(plan_forw,psi2,psi2_k)
         ! chemical potential 1
-        mu1 = chem_pot1(psi1,psi2,psi1_k,dk2,plan_back,Nx,Ny,Nz,dt,alpha,beta,eta)
+        mu1 = chem_pot1(psi1,psi2,psi1_k,dk2,plan_back,V1,Nx,Ny,Nz,dt,alpha,beta,eta)
         ! chemical potential 2
-        mu2 = chem_pot2(psi1,psi2,psi2_k,dk2,plan_back,Nx,Ny,Nz,dt,alpha,beta,eta)
+        mu2 = chem_pot2(psi1,psi2,psi2_k,dk2,plan_back,V2,Nx,Ny,Nz,dt,alpha,beta,eta)
       end if
 
       t = t + dt 
@@ -216,7 +217,7 @@ module time
 
   end subroutine renorm
 
-  function chem_pot1(psi1,psi2,psi1_k,dk2,plan_back,Nx,Ny,Nz,dt,alpha,beta,eta)
+  function chem_pot1(psi1,psi2,psi1_k,dk2,plan_back,V1,Nx,Ny,Nz,dt,alpha,beta,eta)
     
     type(C_PTR), intent(in) :: plan_back
     
@@ -228,6 +229,7 @@ module time
 
     complex(C_DOUBLE_COMPLEX), intent(in) :: psi1(:,:,:), psi2(:,:,:)
     complex(C_DOUBLE_COMPLEX), intent(in) :: psi1_k(:,:,:)
+    double precision, intent(in) :: V1(:,:,:)
 
     double precision :: chem_pot1
 
@@ -270,7 +272,7 @@ module time
 
   end function chem_pot1
 
-  function chem_pot2(psi1,psi2,psi2_k,dk2,plan_back,Nx,Ny,Nz,dt,alpha,beta,eta)
+  function chem_pot2(psi1,psi2,psi2_k,dk2,plan_back,V2,Nx,Ny,Nz,dt,alpha,beta,eta)
     
     type(C_PTR), intent(in) :: plan_back
     
@@ -282,6 +284,7 @@ module time
 
     complex(C_DOUBLE_COMPLEX), intent(in) :: psi1(:,:,:), psi2(:,:,:)
     complex(C_DOUBLE_COMPLEX), intent(in) :: psi2_k(:,:,:)
+    double precision, intent(in) :: V2(:,:,:)
 
     double precision :: chem_pot2
 

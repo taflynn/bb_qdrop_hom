@@ -68,6 +68,48 @@ module init
 
   end function init_wav
 
+  function init_pot(x, y, z, omgx, omgy, omgz, pot_type)
+
+    double precision, intent(in) :: x(:), y(:), z(:)
+    double precision, intent(in) :: omgx, omgy, omgz
+    integer, intent(in) :: pot_type
+
+    double precision, allocatable :: init_pot(:, :, :)
+   
+    ! Local variables 
+    integer :: Nx, Ny, Nz
+    integer :: i, j, k
+   
+    Nx = size(x)
+    Ny = size(y)
+    Nz = size(z)
+
+    allocate(init_pot(Nx, Ny, Nz))
+    if (pot_type == 1) then
+      do k = 1, Nz
+        do j = 1, Ny
+          do i = 1, Nx
+            init_pot(i,j,k) = 0.5*omgx**2.0*x(i)**2.0 &
+                            + 0.5*omgy**2.0*y(j)**2.0 &
+                            + 0.5*omgz**2.0*z(k)**2.0
+          end do
+        end do
+      end do
+    else if (pot_type == 2) then
+      do k = 1, Nz
+        do j = 1, Ny
+          do i = 1, Nx
+            init_pot(i,j,k) = 0.5*omgx**2.0*x(i)**2.0 &
+                            + 0.5*omgy**2.0*y(j)**2.0 &
+                            + 0.5*omgz**2.0*z(k)**2.0 &
+                            + 0.0001*x(i)
+          end do
+        end do
+      end do
+    end if
+  end function init_pot
+
+
   function readin_wav(x,y,z,comp)
     
     double precision, intent(in) :: x(:), y(:), z(:)

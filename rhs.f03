@@ -8,7 +8,7 @@ module rhs
   contains
 
   ! generate the initial form of the wavefunction 
-  subroutine V_rhs1(psi1,psi2,mu1,alpha,beta,eta,dt,Nx,Ny,Nz)
+  subroutine V_rhs1(psi1,psi2,mu1,V1,alpha,beta,eta,dt,Nx,Ny,Nz)
     implicit none
     
     integer, intent(in) :: Nx, Ny, Nz
@@ -17,6 +17,7 @@ module rhs
     double precision, intent(in) :: alpha, beta, eta
 
     complex(C_DOUBLE_COMPLEX), intent(in) :: psi2(:,:,:)
+    double precision, intent(in) :: V1(:,:,:)
     complex(C_DOUBLE_COMPLEX), intent(inout) :: psi1(:,:,:)
 
     ! local variables
@@ -27,7 +28,7 @@ module rhs
     do k = 1, Nz
       do j = 1, Ny
         do i = 1, Nx
-          psi1(i,j,k) = psi1(i,j,k)*exp(-0.5*dt*(abs(psi1(i,j,k))**2.0 + eta*abs(psi2(i,j,k))**2.0 &
+          psi1(i,j,k) = psi1(i,j,k)*exp(-0.5*dt*(V1(i,j,k) + abs(psi1(i,j,k))**2.0 + eta*abs(psi2(i,j,k))**2.0 &
                                        + alpha*(abs(psi1(i,j,k))**2.0 + beta*abs(psi2(i,j,k))**2.0)**1.5 - mu1))
         end do
       end do
@@ -36,7 +37,7 @@ module rhs
 
   end subroutine V_rhs1
   
-  subroutine V_rhs2(psi1,psi2,mu2,alpha,beta,eta,dt,Nx,Ny,Nz)
+  subroutine V_rhs2(psi1,psi2,mu2,V2,alpha,beta,eta,dt,Nx,Ny,Nz)
     implicit none
     
     integer, intent(in) :: Nx, Ny, Nz
@@ -45,6 +46,7 @@ module rhs
     double precision, intent(in) :: alpha, beta, eta
 
     complex(C_DOUBLE_COMPLEX), intent(in) :: psi1(:,:,:)
+    double precision, intent(in) :: V2(:,:,:)
     complex(C_DOUBLE_COMPLEX), intent(inout) :: psi2(:,:,:)
 
     ! local variables
@@ -55,7 +57,7 @@ module rhs
     do k = 1, Nz
       do j = 1, Ny
         do i = 1, Nx
-          psi2(i,j,k) = psi2(i,j,k)*exp(-0.5*dt*(beta*abs(psi2(i,j,k))**2.0 + eta*beta*abs(psi1(i,j,k))**2.0 &
+          psi2(i,j,k) = psi2(i,j,k)*exp(-0.5*dt*(V2(i,j,k) + beta*abs(psi2(i,j,k))**2.0 + eta*beta*abs(psi1(i,j,k))**2.0 &
                                        + alpha*beta**2.0*(abs(psi1(i,j,k))**2.0 + beta*abs(psi2(i,j,k))**2.0)**1.5 - mu2))
         end do
       end do
