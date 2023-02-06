@@ -3,17 +3,19 @@ module init
   
   use HDF5
   use fft
+  use grid
 
   implicit none
   
   contains
 
   ! generate the initial form of the wavefunction 
-  function init_wav(x,y,z,init_type,gauss_sig)
+  function init_wav(x,y,z,init_type,gauss_sig,x_shift)
 
     double precision, intent(in) :: x(:), y(:), z(:)
     integer, intent(in) :: init_type    
     double precision, intent(in) :: gauss_sig
+    double precision, intent(in) :: x_shift
 
 
     complex(C_DOUBLE_COMPLEX), allocatable :: init_wav(:,:,:)
@@ -34,7 +36,7 @@ module init
       do k = 1, Nz
         do j = 1, Ny
           do i = 1, Nx
-            init_wav(i,j,k) = exp(-(x(i)**2.0/(2.0*gauss_sig**2.0) &
+            init_wav(i,j,k) = exp(-((x(i)-x_shift)**2.0/(2.0*gauss_sig**2.0) &
                                   + y(j)**2.0/(2.0*gauss_sig**2.0) &
                                   + z(k)**2.0/(2.0*gauss_sig**2.0)))**0.5
           end do
@@ -46,7 +48,7 @@ module init
       do k = 1, Nz
         do j = 1, Ny
           do i = 1, Nx
-            init_wav(i,j,k) = exp(-(x(i)**2.0/(2.0*gauss_sig**2.0) &
+            init_wav(i,j,k) = exp(-((x(i)-x_shift)**2.0/(2.0*gauss_sig**2.0) &
                                   + y(j)**2.0/(2.0*gauss_sig**2.0) &
                                   + z(k)**2.0/(2.0*gauss_sig**2.0))**3.0)**0.5
           end do
@@ -68,11 +70,11 @@ module init
 
   end function init_wav
 
-  function init_pot(x, y, z, omgx, omgy, omgz, pot_type)
+  function init_pot(x, y, z, omgx, omgy, omgz, x_shift)
 
     double precision, intent(in) :: x(:), y(:), z(:)
     double precision, intent(in) :: omgx, omgy, omgz
-    integer, intent(in) :: pot_type
+    double precision, intent(in) :: x_shift
 
     double precision, allocatable :: init_pot(:, :, :)
    
@@ -84,29 +86,18 @@ module init
     Ny = size(y)
     Nz = size(z)
 
+    write(*, *) "trapping potential with shift:", x_shift
+
     allocate(init_pot(Nx, Ny, Nz))
-    if (pot_type == 1) then
-      do k = 1, Nz
-        do j = 1, Ny
-          do i = 1, Nx
-            init_pot(i,j,k) = 0.5*omgx**2.0*x(i)**2.0 &
-                            + 0.5*omgy**2.0*y(j)**2.0 &
-                            + 0.5*omgz**2.0*z(k)**2.0
-          end do
+    do k = 1, Nz
+      do j = 1, Ny
+        do i = 1, Nx
+          init_pot(i,j,k) = 0.5*omgx**2.0*(x(i)-x_shift)**2.0 &
+                          + 0.5*omgy**2.0*y(j)**2.0 &
+                          + 0.5*omgz**2.0*z(k)**2.0 
         end do
       end do
-    else if (pot_type == 2) then
-      do k = 1, Nz
-        do j = 1, Ny
-          do i = 1, Nx
-            init_pot(i,j,k) = 0.5*omgx**2.0*x(i)**2.0 &
-                            + 0.5*omgy**2.0*y(j)**2.0 &
-                            + 0.5*omgz**2.0*z(k)**2.0 &
-                            + 0.0001*x(i)
-          end do
-        end do
-      end do
-    end if
+    end do
   end function init_pot
 
 

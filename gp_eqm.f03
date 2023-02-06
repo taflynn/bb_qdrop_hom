@@ -25,7 +25,7 @@ program gp_lck
   double precision :: N1, N2
   double precision :: alpha, beta, eta
 
-  integer :: pot_type1=1, pot_type2=2
+  double precision :: x_shift1=0.0, x_shift2=0.0
   double precision :: omgx1, omgy1, omgz1
   double precision :: omgx2, omgy2, omgz2
 
@@ -214,7 +214,7 @@ program gp_lck
     psi1 = readin_wav(x,y,z,1)
   elseif (init_type1 /= 0) then
     ! calculate the initial wavefunction
-    psi1 = init_wav(x,y,z,init_type1,gauss_sig1)
+    psi1 = init_wav(x,y,z,init_type1,gauss_sig1,x_shift1)
     call renorm(psi1,dx,dy,dz,N1)
   end if
   
@@ -224,12 +224,12 @@ program gp_lck
     psi2 = readin_wav(x,y,z,2)
   elseif (init_type2 /= 0) then
     ! calculate the initial wavefunction
-    psi2 = init_wav(x,y,z,init_type2,gauss_sig2)
+    psi2 = init_wav(x,y,z,init_type2,gauss_sig2,x_shift2)
     call renorm(psi2,dx,dy,dz,N2)
   end if
 
-  V1 = init_pot(x, y, z, omgx1, omgy1, omgz1, pot_type1)
-  V2 = init_pot(x, y, z, omgx2, omgy2, omgz2, pot_type2)
+  V1 = init_pot(x, y, z, omgx1, omgy1, omgz1, x_shift1)
+  V2 = init_pot(x, y, z, omgx2, omgy2, omgz2, x_shift2)
 
   ! begin time-stepping
   if (im_t_steps > 0) then
@@ -275,6 +275,9 @@ program gp_lck
       mu2 = readin_chempot(2)
     end if
     
+    x_shift1 = 1.0
+    V1 = init_pot(x, y, z, omgx1, omgy1, omgz1, x_shift1)
+
     ! real time function
     call ssfm(psi1,psi2,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,V1,V2,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
   end if
