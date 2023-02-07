@@ -279,7 +279,7 @@ program gp_lck
     V1 = init_pot(x, y, z, omgx1, omgy1, omgz1, x_shift1)
 
     ! real time function
-    call ssfm(psi1,psi2,dk2,im_t_steps,im_t_save,dt,dx,dy,dz,V1,V2,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
+    call ssfm(psi1,psi2,dk2,re_t_steps,re_t_save,dt,dx,dy,dz,V1,V2,N1,N2,alpha,beta,eta,mu1,mu2,im_real)
   end if
   if (im_t_steps == 0 .and. re_t_steps == 0) then
     ! if there are no time-steps for imaginary and real time then stop program 
